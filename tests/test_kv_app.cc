@@ -40,11 +40,11 @@ void RunWorker() {
 
   // pull
   std::vector<float> rets;
-  //std::cout << "before pull requet" << std::endl;
+  std::cout << "before pull requet" << std::endl;
   kv.Wait(kv.Pull(keys, &rets));
 
   float res = 0;
-  //std::cout << "after pull request " << std::endl;
+  std::cout << "after pull request " << std::endl;
   for (int i = 0; i < num; ++i) {
     res += fabs(rets[i] - vals[i] * repeat);
   }
