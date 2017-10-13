@@ -177,18 +177,19 @@ namespace ps {
             }
  
             /* for self QP & MR */
-            tmp_qp = ibv_create_qp(pd_, &attr);
+            for(i = 0 ; i < 2 ; i++){
+                tmp_qp = ibv_create_qp(pd_, &attr);
 
-            tmp_send_buffer = (char *)malloc(MAX_SIZE);
-            tmp_recv_buffer = (char *)malloc(MAX_SIZE);
+                tmp_send_buffer = (char *)malloc(MAX_SIZE);
+                tmp_recv_buffer = (char *)malloc(MAX_SIZE);
 
-            tmp_send_mr = ibv_reg_mr(pd_, tmp_send_buffer, MAX_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
-            tmp_recv_mr = ibv_reg_mr(pd_, tmp_recv_buffer, MAX_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
+                tmp_send_mr = ibv_reg_mr(pd_, tmp_send_buffer, MAX_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
+                tmp_recv_mr = ibv_reg_mr(pd_, tmp_recv_buffer, MAX_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
 
-            qps.push_back(tmp_qp);
-	    recv_mrs.push_back(tmp_recv_mr);
-            send_mrs.push_back(tmp_send_mr);            
-
+                qps.push_back(tmp_qp);
+	        recv_mrs.push_back(tmp_recv_mr);
+                send_mrs.push_back(tmp_send_mr);            
+            }
 
 	    Van::Start();
         }
@@ -355,7 +356,7 @@ namespace ps {
 
 	    my_node_.id = node.id;
 
-        for(int i = 0 ; i < qps.size() - 1; i++){
+        for(int i = 0 ; i < qps.size() - 2; i++){
                 
             if( qps[i]->qp_num != node.ib_addr[i].qp_num ){
                 std::cout << "Error: invalid association \n"; 
@@ -443,7 +444,7 @@ namespace ps {
             
             }
 
-            SelfConnectQP(qps.size() -1);
+            SelfConnectQP(qps.size() - 2);
 
             /* complete preparation for RDMA Operation */
             int ret_val = ibv_req_notify_cq(recv_cq_, 0);
@@ -857,20 +858,32 @@ namespace ps {
     }
 
     void SelfConnectQP(int index){
-       /* Reset -> Init */
-       struct ibv_qp_attr init_attr;
-       init_attr.qp_state = IBV_QPS_INIT;
-       init_attr.pkey_index = 0;
-       init_attr.port_num = 1; //only one-port ( multi-port is not assumed )
-       init_attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
-       init_attr.qkey = 0x00000001;
+
+       int i, mut, rand;
+       for(i = 0 ; i < 2 ; i++){
+
+        if(i == 0){
+        	mut = 1;
+        	rand = 0;
+        }else{
+		mut = 0;
+		rand = 100;
+        }
+
+       	/* Reset -> Init */
+       	struct ibv_qp_attr init_attr;
+       	init_attr.qp_state = IBV_QPS_INIT;
+       	init_attr.pkey_index = 0;
+       	init_attr.port_num = 1; //only one-port ( multi-port is not assumed )
+       	init_attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
+       	init_attr.qkey = 0x00000001;
 
 
-       int ret = ibv_modify_qp(qps[index], &init_attr, IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS);
-       if(ret != 0){
+       	int ret = ibv_modify_qp(qps[index + i], &init_attr, IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS);
+       	if(ret != 0){
             std::cout << "Error: " << ret << "," << strerror(ret) << "\n";
             return;
-       }
+       	}
 
        /* Init -> RtR */
        struct ibv_ah_attr ah_attr;
@@ -882,12 +895,12 @@ namespace ps {
        rtr_attr.qp_state = IBV_QPS_RTR;
        rtr_attr.path_mtu = IBV_MTU_4096;
        rtr_attr.ah_attr = ah_attr;
-       rtr_attr.dest_qp_num = qps[index]->qp_num;
+       rtr_attr.dest_qp_num = qps[index + mut]->qp_num;
        rtr_attr.rq_psn = 0;
        rtr_attr.max_dest_rd_atomic = 16;
        rtr_attr.min_rnr_timer = 0; // infinite
 
-       ret = ibv_modify_qp(qps[index], &rtr_attr, IBV_QP_STATE | IBV_QP_PATH_MTU | IBV_QP_AV | IBV_QP_DEST_QPN | IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER);
+       ret = ibv_modify_qp(qps[index + i], &rtr_attr, IBV_QP_STATE | IBV_QP_PATH_MTU | IBV_QP_AV | IBV_QP_DEST_QPN | IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER);
        if(ret != 0){
            std::cout << "Error: " << ret << "," << strerror(ret) << "\n";
            return;
@@ -902,26 +915,26 @@ namespace ps {
        rts_attr.rnr_retry = 7;
        rts_attr.max_rd_atomic = 0;
 
-       ret = ibv_modify_qp(qps[index], &rts_attr, IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT | IBV_QP_RNR_RETRY | IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC); //RC
+       ret = ibv_modify_qp(qps[index + i], &rts_attr, IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT | IBV_QP_RNR_RETRY | IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC); //RC
        if(ret != 0){
              std::cout << "Error: " << ret << "," << strerror(ret) << "\n";
              return;
        }
 
        /* vector -> unordered map */
-       int index_id = my_node_.id;
-       rdma_info_[index_id].addr = (uint64_t)recv_mrs[index]->addr;
-       rdma_info_[index_id].rkey = recv_mrs[index]->rkey;
+       int index_id = my_node_.id + rand;
+       rdma_info_[index_id].addr = (uint64_t)recv_mrs[index + mut]->addr;
+       rdma_info_[index_id].rkey = recv_mrs[index + mut]->rkey;
 
-       qps_[index_id] = qps[index];
-       recv_mrs_[index_id] = recv_mrs[index];
-       send_mrs_[index_id] = send_mrs[index];
+       qps_[index_id] = qps[index + i];
+       recv_mrs_[index_id] = recv_mrs[index + i];
+       send_mrs_[index_id] = send_mrs[index + i];
 
        /* using only one sge */
        ibv_sge_ sge;
-       sge.addr = (uint64_t)recv_mrs[index]->addr;
+       sge.addr = (uint64_t)recv_mrs[index + i]->addr;
        sge.length = MAX_SIZE;
-       sge.lkey = recv_mrs[index]->lkey;
+       sge.lkey = recv_mrs[index + i]->lkey;
 
        ibv_recv_wr_ recv_wr = {
            .wr_id = index_id,
@@ -931,8 +944,9 @@ namespace ps {
        };
 
        ibv_recv_wr_ *bad_wr;
-       ret = ibv_post_recv(qps[index], &recv_wr, &bad_wr);
-       std::cout << "@ " << my_node_.id << " ---- " << recv_wr.wr_id << ", connect QP number : " << qps[index]->qp_num << " --->> " << qps_[index_id]->qp_num << std::endl;	
+       ret = ibv_post_recv(qps[index + i], &recv_wr, &bad_wr);
+       std::cout << "@ " << my_node_.id << " ---- " << recv_wr.wr_id << ", connect QP number : " << qps[index + i]->qp_num << " --->> " << qps[index + mut]->qp_num << std::endl;	
+     }
     }
  
     std::mutex mu_;
