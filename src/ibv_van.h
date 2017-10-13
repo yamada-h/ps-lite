@@ -828,6 +828,14 @@ namespace ps {
 	}
      }
 
+    bool CheckIBVReady(){
+	if(ibv_flags){
+		return true;
+	}else{
+		return false;
+	}
+    }
+
     std::mutex mu_;
 
     };

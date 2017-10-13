@@ -91,6 +91,8 @@ class Van {
    * \return the number of bytes received. -1 if failed or timeout
    */
   virtual int RecvMsg(Message* msg) = 0;
+
+  virtual bool CheckIBVReady() = 0;
   /**
    * \brief send a mesage
    * \return the number of bytes sent

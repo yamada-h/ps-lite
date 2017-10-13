@@ -599,7 +599,7 @@ void Van::Heartbeat() {
     msg.meta.control.cmd = Control::HEARTBEAT;
     msg.meta.control.node.push_back(my_node_);
     msg.meta.timestamp = timestamp_++;
-    //Send(msg);
+    if(CheckIBVReady()) Send(msg);
   }
 }
 }  // namespace ps
