@@ -330,7 +330,7 @@ void Van::Receiving() {
           PS_VLOG(1) << "Barrier count for " << group << " : " << barrier_count_[group];
           //std::cout << "Postoffice::Get()->GetNodeIDs(group).size() is " << Postoffice::Get()->GetNodeIDs(group).size() << std::endl;
           if (barrier_count_[group] ==
-              static_cast<int>(Postoffice::Get()->GetNodeIDs(group).size()) -1 ) {
+              static_cast<int>(Postoffice::Get()->GetNodeIDs(group).size())) {
             barrier_count_[group] = 0;
             Message res;
             res.meta.request = false;

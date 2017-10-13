@@ -723,7 +723,9 @@ namespace ps {
             /* for all work completion */
             for(int i = 0 ; i < num_wc ; i++){
 
-
+                if(wc[i].wr_id == my_node_.id){
+			wc[i].wr_id += 100;
+		}
 
                 /* wc.wr_id has senders id */
                 /* get qp & mr */
@@ -864,10 +866,10 @@ namespace ps {
 
         if(i == 0){
         	mut = 1;
-        	rand = 0;
+        	rand = 100;
         }else{
 		mut = 0;
-		rand = 100;
+		rand = 0;
         }
 
        	/* Reset -> Init */
@@ -937,7 +939,7 @@ namespace ps {
        sge.lkey = recv_mrs[index + i]->lkey;
 
        ibv_recv_wr_ recv_wr = {
-           .wr_id = index_id,
+           .wr_id = my_node_.id,
            .next = NULL,
            .sg_list = &sge,
            .num_sge = 1,

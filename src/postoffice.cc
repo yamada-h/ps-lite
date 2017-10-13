@@ -123,7 +123,7 @@ void Postoffice::Barrier(int node_group) {
   req.meta.control.cmd = Control::BARRIER;
   req.meta.control.barrier_group = node_group;
   req.meta.timestamp = van_->GetTimestamp();
-  if(role != Node::SCHEDULER) CHECK_GT(van_->Send(req), 0);
+  CHECK_GT(van_->Send(req), 0);
   barrier_cond_.wait(ulk, [this] {
       return barrier_done_;
     });
