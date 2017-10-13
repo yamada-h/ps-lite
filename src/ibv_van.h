@@ -546,8 +546,6 @@ namespace ps {
 
             PackMeta_IBV(msg.meta, &buf_tmp, &meta_size);
 
-            //std::cout << "msg from " << qp_->qp_num << ", meta_size is ::::: " << meta_size << " @ " << my_node_.id << " --> " << id << std::endl;
-
             size_t send_bytes = meta_size;
 
             for (i = 0 ; i < n ; i++){
@@ -585,7 +583,7 @@ namespace ps {
             ibv_wc_ wc[1];
             
             /* for debugging print */
-            if(n > 0) std::cout << "before ibv_post_send with data @ " << my_node_.id << std::endl;
+            //if(n > 0) std::cout << "before ibv_post_send with data @ " << my_node_.id << std::endl;
 
             int ret = ibv_post_send(qp_, &send_wr_, &bad_wr_);
 	    
@@ -593,7 +591,7 @@ namespace ps {
                 LOG(WARNING) << "Failed to ibv_post_send : " << ret << " @ " << my_node_.id << " --> " << id; 
                 return -1;
             }else{
-		        std::cout << "Success to ibv_post_send @ " << my_node_.id << ", send_bytes : " << send_bytes << std::endl;
+		std::cout << "Success to ibv_post_send @ " << my_node_.id << ", send_bytes : " << send_bytes << std::endl;
             }
  	    
 
@@ -667,7 +665,7 @@ namespace ps {
         /* Receive function for ibv */
         int RecvIBV(Message* msg){
 
-            int ret, meta_size, total_size, process_size;
+            int ret, meta_size, recv_bytes;
             int num_wc;
             ibv_wc_ wc[num_qp_];
             ibv_recv_wr_ *bad_wr;
@@ -676,11 +674,11 @@ namespace ps {
 
             struct ibv_qp_attr *attr;
     	    ibv_qp_attr_mask attr_mask;
-	        struct ibv_qp_init_attr* init_attr;
+	    struct ibv_qp_init_attr* init_attr;
 
             
-	        std::cout << "I will get completion event @ " << my_node_.id <<  std::endl;
-	        // blocking function 
+	    //std::cout << "I will get completion event @ " << my_node_.id <<  std::endl;
+	    // blocking function 
             //ret = ibv_get_cq_event(channel_, &recv_cq_, &cq_context_);
 
             //ibv_ack_cq_events(recv_cq_, 1);
@@ -693,7 +691,6 @@ namespace ps {
             do { 
                 num_wc = ibv_poll_cq(recv_cq_, 1, wc); // temporary  set second argument : 1
             } while (num_wc == 0);
-            //std::cout << "get completion......." << std::endl;
             if(wc[0].status != IBV_WC_SUCCESS){
                 LOG(WARNING) << "Completion Error " << wc[0].status << ", @ " << my_node_.id << " for " << wc[0].wr_id;
 
@@ -734,24 +731,20 @@ namespace ps {
 		        }
 		        */
 
-                total_size = wc[i].byte_len;
-                total_size -= meta_size;
-
-                process_size = meta_size;
+                recv_bytes = meta_size;
 
                 //std::cout << "msg->meta.data-num : " << msg->meta.data_num << std::endl;   
 		        for(int j = 0 ; j < msg->meta.data_num ; ++j){
 
-                    std::cout << "msg->meta.data_size --- " << msg->meta.data_size[j] << " reset_mr address : " << mr->addr + process_size << " @ " << my_node_.id << std::endl;
-			        uint64_t *sample = (uint64_t *)(mr->addr + process_size);
+                    //std::cout << "msg->meta.data_size --- " << msg->meta.data_size[j] << " reset_mr address : " << mr->addr + process_size << " @ " << my_node_.id << std::endl;
 
                     /* I want to delete this part.... */
                     char* tmp_reset_mr = (char *)malloc(msg->meta.data_size[j]);
-                    memcpy(tmp_reset_mr, mr->addr + process_size, msg->meta.data_size[j]);
+                    memcpy(tmp_reset_mr, mr->addr + recv_bytes, msg->meta.data_size[j]);
                 	
                     data.reset_mr(tmp_reset_mr, msg->meta.data_size[j]);
                 	msg->data.push_back(data);
-                    process_size += msg->meta.data_size[j];
+                    recv_bytes += msg->meta.data_size[j];
 		        }
  
                 /* next work request */
@@ -768,27 +761,14 @@ namespace ps {
                     .num_sge = 1,
                 };
  
-		        ibv_sge_ sge1 = {
-                    .addr = (uint64_t)mr->addr,
-                    .length = MAX_SIZE,
-                    .lkey = mr->lkey,
-                };
-
-                ibv_recv_wr_ recv_wr1 = {
-                    .wr_id = wc[i].wr_id,
-                    .next = NULL,
-                    .sg_list = &sge1,
-                    .num_sge = 1,
-                };
-
                 ret = ibv_post_recv(qp, &recv_wr, &bad_wr);
 
 		        //ret = ibv_post_recv(qp, &recv_wr1, &bad_wr);
 
-            std::cout << "Finish IBV_POST_RECV!! from " << my_node_.id << " <---- " << wc[i].wr_id <<  std::endl;
+            std::cout << "Finish IBV_POST_RECV!! from " << my_node_.id << " <---- " << wc[i].wr_id << "recv_bytes : " << recv_bytes << std::endl;
             }
 
-	    return process_size;
+	    return recv_bytes;
 
         }
 
