@@ -138,6 +138,7 @@ void Van::Stop() {
   Message exit;
   exit.meta.control.cmd = Control::TERMINATE;
   exit.meta.recver = my_node_.id;
+  std::cout << " exit.meta.recver --- " << my_node_.id << std::endl;
   SendMsg(exit);
   receiver_thread_->join();
   if (!is_scheduler_) heartbeat_thread_->join();
@@ -336,13 +337,18 @@ void Van::Receiving() {
             res.meta.request = false;
             res.meta.control.cmd = Control::BARRIER;
             for (int r : Postoffice::Get()->GetNodeIDs(group)) {
-              	res.meta.recver = r;
+
+                //if(r == my_node_.id){
+              		//res.meta.recver = r + 100;
+                //}else{
+			res.meta.recver = r;
+		//}
               	res.meta.timestamp = timestamp_++;
-              if( r == kScheduler ){
-		Postoffice::Get()->Manage(msg);
-              }else{
+              //if( r == kScheduler ){
+		//Postoffice::Get()->Manage(msg);
+              //}else{
 		CHECK_GT(Send(res),0);
-	      }
+	      //}
             }
           }
         } else {

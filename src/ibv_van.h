@@ -612,7 +612,7 @@ namespace ps {
                 LOG(WARNING) << "Failed to ibv_post_send : " << ret << " @ " << my_node_.id << " --> " << id; 
                 return -1;
             }else{
-		std::cout << "Success to ibv_post_send @ " << my_node_.id << ", send_bytes : " << send_bytes << std::endl;
+		std::cout << "Success to ibv_post_send @ " << my_node_.id << " ---> " << id << ", send_bytes : " << send_bytes << std::endl;
             }
  	    
 
@@ -861,15 +861,17 @@ namespace ps {
 
     void SelfConnectQP(int index){
 
-       int i, mut, rand;
+       int i, mut, rand, rand_o;
        for(i = 0 ; i < 2 ; i++){
 
         if(i == 0){
         	mut = 1;
         	rand = 100;
+		rand_o = 0;
         }else{
 		mut = 0;
 		rand = 0;
+		rand_o = 100;
         }
 
        	/* Reset -> Init */
@@ -939,7 +941,7 @@ namespace ps {
        sge.lkey = recv_mrs[index + i]->lkey;
 
        ibv_recv_wr_ recv_wr = {
-           .wr_id = my_node_.id,
+           .wr_id = index_id,
            .next = NULL,
            .sg_list = &sge,
            .num_sge = 1,
@@ -947,7 +949,7 @@ namespace ps {
 
        ibv_recv_wr_ *bad_wr;
        ret = ibv_post_recv(qps[index + i], &recv_wr, &bad_wr);
-       std::cout << "@ " << my_node_.id << " ---- " << recv_wr.wr_id << ", connect QP number : " << qps[index + i]->qp_num << " --->> " << qps[index + mut]->qp_num << std::endl;	
+       std::cout << "@ " << my_node_.id + rand_o << " ---- " << recv_wr.wr_id << ", connect QP number : " << qps[index + i]->qp_num << " --->> " << qps[index + mut]->qp_num << std::endl;	
      }
     }
  
