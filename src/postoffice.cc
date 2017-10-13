@@ -56,15 +56,14 @@ void Postoffice::Start(const char* argv0, const bool do_barrier) {
           kScheduler + kWorkerGroup, kScheduler + kServerGroup}) {
     node_ids_[g].push_back(kScheduler);
   }
-
   // start van
   van_->Start();
 
   // record start time
   start_time_ = time(NULL);
-
   // do a barrier here
   if (do_barrier) Barrier(kWorkerGroup + kServerGroup + kScheduler);
+  //std::cout << "End Postoffice - start !! " << std::endl;
 }
 
 void Postoffice::Finalize(const bool do_barrier) {
@@ -124,8 +123,7 @@ void Postoffice::Barrier(int node_group) {
   req.meta.control.cmd = Control::BARRIER;
   req.meta.control.barrier_group = node_group;
   req.meta.timestamp = van_->GetTimestamp();
-  CHECK_GT(van_->Send(req), 0);
-
+  if(role != Node::SCHEDULER) CHECK_GT(van_->Send(req), 0);
   barrier_cond_.wait(ulk, [this] {
       return barrier_done_;
     });

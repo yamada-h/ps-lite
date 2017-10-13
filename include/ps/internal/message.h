@@ -57,6 +57,22 @@ DataType GetDataType() {
     return OTHER;
   }
 }
+
+struct Ib_addr{
+  uint32_t lid;
+  uint32_t port_num;
+  uint32_t qp_num;
+  uint32_t psn;
+  uint32_t rkey;
+  uint64_t addr;
+  uint32_t dest_id; /* remote node's id */
+  uint32_t dest_qp_num;
+  uint64_t dest_addr;
+  uint32_t dest_lid;
+  uint32_t dest_psn;
+  uint32_t dest_rkey;
+};
+
 /**
  * \brief information about a node
  */
@@ -92,6 +108,11 @@ struct Node {
   int port;
   /** \brief whether this node is created by failover */
   bool is_recovery;
+
+  std::vector<Ib_addr> ib_addr;
+  /** \brief offset of ib_addrs use for connect QP */
+  int offset;
+
 };
 /**
  * \brief meta info of a system control message
@@ -123,6 +144,7 @@ struct Control {
   Command cmd;
   /** \brief node infos */
   std::vector<Node> node;
+
   /** \brief the node group for a barrier, such as kWorkerGroup */
   int barrier_group;
   /** message signature */
@@ -137,7 +159,7 @@ struct Meta {
   /** \brief default constructor */
   Meta() : head(kEmpty), customer_id(kEmpty), timestamp(kEmpty),
            sender(kEmpty), recver(kEmpty),
-           request(false), push(false), simple_app(false) {}
+           request(false), simple_app(false) {}
   std::string DebugString() const {
     std::stringstream ss;
     if (sender == Node::kEmpty) {
@@ -186,6 +208,10 @@ struct Meta {
   std::vector<DataType> data_type;
   /** \brief system control message */
   Control control;
+  /** \brief # of data in receive message */
+  int data_num = 0;
+  /** \brief size of each data in receive message */
+  std::vector<int> data_size;
 };
 /**
  * \brief messages that communicated amaong nodes.

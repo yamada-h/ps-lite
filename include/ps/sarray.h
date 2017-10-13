@@ -164,6 +164,10 @@ class SArray {
     size_ = size; capacity_ = size; ptr_.reset(data, del);
   }
 
+  void reset_mr(V* data, size_t size){
+    size_ = size; capacity_ = size; ptr_.reset(data);
+  }
+
   /**
    * @brief Resizes the array to size elements
    *

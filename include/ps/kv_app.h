@@ -399,6 +399,12 @@ void KVServer<Val>::Response(const KVMeta& req, const KVPairs<Val>& res) {
       msg.AddData(res.lens);
     }
   }
+  msg.meta.data_num = msg.data.size();
+  //std::cout << "msg.meta.data_num : " << msg.meta.data_num << std::endl;
+  for(int i = 0 ; i < msg.meta.data_num ; ++i){
+	msg.meta.data_size.push_back(msg.data[i].size());
+  }
+  //std::cout << "completion data push for " << msg.meta.data_num << std::endl;
   Postoffice::Get()->van()->Send(msg);
 }
 
@@ -493,6 +499,13 @@ void KVWorker<Val>::Send(int timestamp, bool push, int cmd, const KVPairs<Val>& 
         msg.AddData(kvs.lens);
       }
     }
+    msg.meta.data_num = msg.data.size();
+    //std::cout << "msg.meta.data_num : " << msg.meta.data_num << std::endl;
+    for(int i = 0 ; i < msg.meta.data_num ; ++i){
+        msg.meta.data_size.push_back(msg.data[i].size());
+    }
+    //std::cout << "completion data push for " << msg.meta.data_num << std::endl;
+
     Postoffice::Get()->van()->Send(msg);
   }
 }

@@ -1,4 +1,5 @@
 #include "ps/ps.h"
+#include "unistd.h"
 using namespace ps;
 
 void StartServer() {
@@ -13,7 +14,7 @@ void RunWorker() {
   KVWorker<float> kv(0);
 
   // init
-  int num = 10000;
+  int num = 1000;
   std::vector<Key> keys(num);
   std::vector<float> vals(num);
 
@@ -25,21 +26,24 @@ void RunWorker() {
   }
 
   // push
-  int repeat = 50;
+  int repeat = 4;
   std::vector<int> ts;
   for (int i = 0; i < repeat; ++i) {
     ts.push_back(kv.Push(keys, vals));
-
+    std::cout << "ts[i] : " << ts[i] << std::endl;
     // to avoid too frequency push, which leads huge memory usage
     if (i > 10) kv.Wait(ts[ts.size()-10]);
   }
+  std::cout << "before kv.wait....." << std::endl;
   for (int t : ts) kv.Wait(t);
+  std::cout << "end kv.watit ......" << std::endl;
 
   // pull
   std::vector<float> rets;
   kv.Wait(kv.Pull(keys, &rets));
 
   float res = 0;
+  std::cout << " before pull request " << std::endl;
   for (int i = 0; i < num; ++i) {
     res += fabs(rets[i] - vals[i] * repeat);
   }
@@ -49,9 +53,38 @@ void RunWorker() {
 
 int main(int argc, char *argv[]) {
   // setup server nodes
+  /*
+  if(IsWorker()){
+  	std::cout << "before start worker\n";
+  }else if(IsServer()){
+	std::cout << "before start server\n";
+  }else{
+	std::cout << "before start scheduler\n";
+  }
+  */
   StartServer();
+  /*
+  if(IsWorker()){
+        std::cout << "after start worker\n";
+  }else if(IsServer()){
+        std::cout << "after start server\n";
+  }else{
+        std::cout << "after start scheduler\n";
+  }
+  */
+
   // start system
   Start();
+  /*
+  if(IsWorker()){
+        std::cout << "before run worker\n";
+  }else if(IsServer()){
+        std::cout << "before run server\n";
+  }else{
+        std::cout << "before run scheduler\n";
+  }
+  */
+
   // run worker nodes
   RunWorker();
   // stop system

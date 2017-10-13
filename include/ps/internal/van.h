@@ -43,6 +43,7 @@ class Van {
    * accoding app.
    */
   virtual void Start();
+
   /**
    * \brief send a message, It is thread-safe
    * \return the number of bytes sent. -1 if failed
@@ -74,6 +75,10 @@ class Van {
    * \brief connect to a node
    */
   virtual void Connect(const Node& node) = 0;
+  virtual void Connect_QPs(std::vector<Node> &node_list, Node& new_node) = 0;
+  virtual void Connect_zmq(const Node& node) = 0;
+
+  virtual void UpdateIDtoIBaddr(std::vector<Node> &node_list, Node& node) = 0;
   /**
    * \brief bind to my node
    * do multiple retries on binding the port. since it's possible that
@@ -91,10 +96,12 @@ class Van {
    * \return the number of bytes sent
    */
   virtual int SendMsg(const Message& msg) = 0;
+  //virtual int SendMsg_zmq(const Message& msg) = 0;
   /**
    * \brief pack meta into a string
    */
   void PackMeta(const Meta& meta, char** meta_buf, int* buf_size);
+  void PackMeta_IBV(const Meta& meta, char** meta_buf, int* buf_size);
   /**
    * \brief unpack meta from a string
    */
