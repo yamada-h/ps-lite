@@ -198,15 +198,19 @@ namespace ps {
             PS_VLOG(1) << my_node_.ShortDebugString() << " is stopping";
             Van::Stop();
             // close sockets
+            PS_VLOG(2) << "close zmq sockets";
             int linger = 0;
             int rc = zmq_setsockopt(receiver_, ZMQ_LINGER, &linger, sizeof(linger));
             CHECK(rc == 0 || errno == ETERM);
+            PS_VLOG(2) << "close receiver";
             CHECK_EQ(zmq_close(receiver_), 0);
             for (auto& it : senders_) {
                 int rc = zmq_setsockopt(it.second, ZMQ_LINGER, &linger, sizeof(linger));
                 CHECK(rc == 0 || errno == ETERM);
+                PS_VLOG(2) << "close sender";
                 CHECK_EQ(zmq_close(it.second), 0);
             }
+            PS_VLOG(2) << "destroy zmq context";
             zmq_ctx_destroy(zmq_context_);
 
             //close ibverbs
@@ -215,13 +219,13 @@ namespace ps {
                 ibv_dereg_mr(send_mrs[i]);
 		ibv_dereg_mr(recv_mrs[i]);
             }
-            std::cout << " destroy qps, mrs " << std::endl;
+            PS_VLOG(2) << "destroy qps, mrs";
             ibv_destroy_cq(recv_cq_);
             ibv_destroy_cq(send_cq_);
             ibv_dealloc_pd(pd_);
             ibv_close_device(ibv_context_);
             ibv_free_device_list(device_list_);
-
+            PS_VLOG(2) << "Finish to free zmq, ibverbs";
         }
 
         // for zmq function
@@ -317,6 +321,10 @@ namespace ps {
         CHECK(node.hostname.size());
 
         int id = node.id;
+        auto it = senders_.find(id);
+        if (it != senders_.end()) {
+            CHECK_EQ(zmq_close(it->second), 0);
+        }
 
         if((node.role == my_node_.role) && (node.id != my_node_.id)) return;
 
@@ -669,7 +677,7 @@ namespace ps {
                     bool more = zmq_msg_more(zmsg);
                     delete zmsg;
                     if (!more) break;
-                } else if(i > 2) {
+                } else if (i > 2) {
                     // zero-copy
                     SArray<char> data;
                     data.reset(buf, size, [zmsg, size](char* buf) {

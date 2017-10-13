@@ -5,6 +5,8 @@ if [ $# -lt 3 ]; then
     exit -1;
 fi
 
+export PS_VERBOSE=3
+
 export DMLC_NUM_SERVER=$1
 shift
 export DMLC_NUM_WORKER=$1
@@ -17,21 +19,21 @@ arg="$@"
 export DMLC_PS_ROOT_URI='127.0.0.1'
 export DMLC_PS_ROOT_PORT=8000
 export DMLC_ROLE='scheduler'
-${bin} ${arg} &
+${bin} ${arg} 2>&1 | tee scheduler.log &
 
 
 # start servers
 export DMLC_ROLE='server'
 for ((i=0; i<${DMLC_NUM_SERVER}; ++i)); do
     export HEAPPROFILE=./S${i}
-    ${bin} ${arg} &
+    ${bin} ${arg} 2>&1 | tee server.log &
 done
 
 # start workers
 export DMLC_ROLE='worker'
 for ((i=0; i<${DMLC_NUM_WORKER}; ++i)); do
     export HEAPPROFILE=./W${i}
-    ${bin} ${arg} &
+    ${bin} ${arg} 2>&1 | tee worker.log &
 done
 
 wait
