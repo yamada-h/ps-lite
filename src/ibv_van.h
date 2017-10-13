@@ -5,8 +5,8 @@
 #ifndef PS_ZMQ_VAN_H_
 #define PS_ZMQ_VAN_H_
 
-#define NUM_WORKERS 1
-#define NUM_SERVERS 1
+//#define NUM_WORKERS 1
+//#define NUM_SERVERS 1
 #define MAX_SIZE 130000 //temporal value
 
 #include <infiniband/verbs.h>
@@ -97,9 +97,9 @@ namespace ps {
                WORKER : NUM_SERVER + NUM_SCHEDULER(= 1)
                SERVER : NUM_WORKER + NUM_SCHEDULER(= 1) */
             if(is_scheduler_){
-                num_qp_ = NUM_SERVERS + NUM_WORKERS;
+                num_qp_ = Environment::Get()->find("DMLC_NUM_WORKER") + Environment::Get()->find("DMLC_NUM_SERVER");
             }else{
-                num_qp_ = Postoffice::Get()->is_server() ? NUM_SERVERS : NUM_WORKERS;
+                num_qp_ = Postoffice::Get()->is_server() ? Environment::Get()->find("DMLC_NUM_WORKER") : Environment::Get()->find("DMLC_NUM_SERVER");
                 num_qp_ += 1;
             }
 
