@@ -97,9 +97,9 @@ namespace ps {
                WORKER : NUM_SERVER + NUM_SCHEDULER(= 1)
                SERVER : NUM_WORKER + NUM_SCHEDULER(= 1) */
             if(is_scheduler_){
-                num_qp_ = Environment::Get()->find("DMLC_NUM_WORKER") + Environment::Get()->find("DMLC_NUM_SERVER");
+                num_qp_ = atoi(Environment::Get()->find("DMLC_NUM_WORKER")) + atoi(Environment::Get()->find("DMLC_NUM_SERVER"));
             }else{
-                num_qp_ = Postoffice::Get()->is_server() ? Environment::Get()->find("DMLC_NUM_WORKER") : Environment::Get()->find("DMLC_NUM_SERVER");
+                num_qp_ = Postoffice::Get()->is_server() ? atoi(Environment::Get()->find("DMLC_NUM_WORKER")) : atoi(Environment::Get()->find("DMLC_NUM_SERVER"));
                 num_qp_ += 1;
             }
 
