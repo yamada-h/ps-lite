@@ -143,6 +143,7 @@ void Van::Stop() {
   receiver_thread_->join();
   if (!is_scheduler_) heartbeat_thread_->join();
   if (resender_) delete resender_;
+  std::cout << " finish Van::Stop() " << std::endl;
 }
 
 int Van::Send(const Message& msg) {

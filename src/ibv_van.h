@@ -210,12 +210,12 @@ namespace ps {
             zmq_ctx_destroy(zmq_context_);
 
             //close ibverbs
-            for(int i = 0 ; i < num_qp_ ; i++){
+            for(int i = 0 ; i < qps.size() ; i++){
                 ibv_destroy_qp(qps[i]);
                 ibv_dereg_mr(send_mrs[i]);
-		        ibv_dereg_mr(recv_mrs[i]);
+		ibv_dereg_mr(recv_mrs[i]);
             }
-
+            std::cout << " destroy qps, mrs " << std::endl;
             ibv_destroy_cq(recv_cq_);
             ibv_destroy_cq(send_cq_);
             ibv_dealloc_pd(pd_);
