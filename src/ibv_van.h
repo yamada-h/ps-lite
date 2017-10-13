@@ -932,9 +932,9 @@ namespace ps {
 
        ibv_recv_wr_ *bad_wr;
        ret = ibv_post_recv(qps[index], &recv_wr, &bad_wr);
-	
+       std::cout << "@ " << my_node_.id << " ---- " << recv_wr.wr_id << ", connect QP number : " << qps[index]->qp_num << " --->> " << qps_[index_id]->qp_num << std::endl;	
     }
-
+ 
     std::mutex mu_;
 
     };
