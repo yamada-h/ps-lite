@@ -498,8 +498,8 @@ namespace ps {
         /* specify QP & MR from msg's meta, and serialize msg, and throw WR into SQ */
         /* To Do: implement resender mechanism */
         int SendIBV(const Message& msg){
-
-            std::lock_guard<std::mutex> lk(mu_);
+            std::mutex mu_tmp;
+            std::lock_guard<std::mutex> lk(mu_tmp);
 
             int id = msg.meta.recver;
             int count = 0;
